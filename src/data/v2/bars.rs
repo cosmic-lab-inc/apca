@@ -239,7 +239,9 @@ Endpoint! {
   }
 
   fn path(input: &Self::Input) -> Str {
-    format!("{}{}/bars", input.prefix, input.symbol).into()
+    // url encode input.symbol so that BTC/USD becomes BTC%2FUSD
+    let symbol = input.symbol.replace("/", "%2F");
+    format!("{}{}/bars", input.prefix, symbol).into()
   }
 
   fn query(input: &Self::Input) -> Result<Option<Str>, Self::ConversionError> {
