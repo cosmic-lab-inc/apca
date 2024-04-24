@@ -82,8 +82,7 @@ pub struct ListReq {
   #[serde(skip)]
   pub symbol: String,
   /// The path prefix based on the market (e.g. stocks or crypto)
-  /// Crypto = /v1beta3/crypto/us/
-  /// Stocks = /v2/stocks/
+  #[serde(skip)]
   pub prefix: MarketPrefix,
   /// Filter data equal to or after this time in RFC-3339 format.
   /// Defaults to the current day in CT.

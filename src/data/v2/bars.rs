@@ -59,6 +59,7 @@ pub struct ListReq {
   #[serde(skip)]
   pub symbol: String,
   /// Path prefix based on market (e.g. stocks or crypto)
+  #[serde(skip)]
   pub prefix: MarketPrefix,
   /// The maximum number of bars to be returned for each symbol.
   /// It can be between 1 and 10000. Defaults to 1000 if the provided

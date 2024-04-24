@@ -24,8 +24,7 @@ pub struct ListReq {
   #[serde(skip)]
   pub symbol: String,
   /// The path prefix based on the market (e.g. stocks or crypto)
-  /// Crypto = /v1beta3/crypto/us/
-  /// Stocks = /v2/stocks/
+  #[serde(skip)]
   pub prefix: MarketPrefix,
   /// The maximum number of trades to be returned for each symbol.
   ///
