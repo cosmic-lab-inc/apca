@@ -65,14 +65,14 @@ pub enum TimeFrame {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 pub enum Sort {
-  Asc,
-  Desc
+  acs,
+  desc
 }
 impl std::fmt::Display for Sort {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {
-      Sort::Asc => write!(f, "asc"),
-      Sort::Desc => write!(f, "desc"),
+      Sort::asc => write!(f, "asc"),
+      Sort::desc => write!(f, "desc"),
     }
   }
 }
@@ -345,7 +345,7 @@ mod tests {
     let client = Client::new(api_info);
     let start = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
     let end = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     assert_eq!(res.bars, Vec::new())
@@ -362,7 +362,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -400,7 +400,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     let mut res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -427,7 +427,7 @@ mod tests {
       adjustment: Some(adjustment),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     client.issue::<List>(&request).await.unwrap()
   }
@@ -498,7 +498,7 @@ mod tests {
       feed: Some(Feed::SIP),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
@@ -523,7 +523,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute, Sort::Asc);
+    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute, Sort::asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -541,7 +541,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-02-01T00:00:00Z").unwrap();
     let end = DateTime::from_str("2022-02-20T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
