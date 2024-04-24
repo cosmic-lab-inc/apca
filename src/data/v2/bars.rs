@@ -17,19 +17,50 @@ use crate::util::vec_from_str;
 use crate::Str;
 
 
+
 /// An enumeration of the various supported time frames.
+/// [1-59]Min / T
+/// [1-23]Hour / H
+/// 1Day / D
+/// 1Week / W
+/// [1,2,3,4,6,12]Month / M
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[non_exhaustive]
 pub enum TimeFrame {
-  /// A time frame of one minute.
   #[serde(rename = "1Min")]
   OneMinute,
-  /// A time frame of one hour.
+  #[serde(rename = "3Min")]
+  ThreeMinutes,
+  #[serde(rename = "5Min")]
+  FiveMinutes,
+  #[serde(rename = "10Min")]
+  TenMinutes,
+  #[serde(rename = "15Min")]
+  FifteenMinutes,
+  #[serde(rename = "30Min")]
+  ThirtyMinutes,
   #[serde(rename = "1Hour")]
   OneHour,
-  /// A time frame of one day.
+  #[serde(rename = "2Hour")]
+  TwoHours,
+  #[serde(rename = "4Hour")]
+  FourHours,
+  #[serde(rename = "6Hour")]
+  SixHours,
+  #[serde(rename = "12Hour")]
+  TwelveHours,
   #[serde(rename = "1Day")]
   OneDay,
+  #[serde(rename = "1Week")]
+  OneWeek,
+  #[serde(rename = "1Month")]
+  OneMonth,
+  #[serde(rename = "3Month")]
+  ThreeMonths,
+  #[serde(rename = "6Month")]
+  SixMonths,
+  #[serde(rename = "12Month")]
+  OneYear,
 }
 
 
