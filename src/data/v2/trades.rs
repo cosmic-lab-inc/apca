@@ -12,6 +12,7 @@ use serde_urlencoded::to_string as to_query;
 
 use crate::data::v2::Feed;
 use crate::data::DATA_BASE_URL;
+use crate::data::v2::prefix::MarketPrefix;
 use crate::util::vec_from_str;
 use crate::Str;
 
@@ -22,6 +23,10 @@ pub struct ListReq {
   /// The symbol for which to retrieve market data.
   #[serde(skip)]
   pub symbol: String,
+  /// The path prefix based on the market (e.g. stocks or crypto)
+  /// Crypto = /v1beta3/crypto/us/
+  /// Stocks = /v2/stocks/
+  pub prefix: MarketPrefix,
   /// The maximum number of trades to be returned for each symbol.
   ///
   /// It can be between 1 and 10000. Defaults to 1000 if the provided
@@ -67,12 +72,13 @@ pub struct ListReqInit {
 impl ListReqInit {
   /// Create a [`ListReq`] from a `ListReqInit`.
   #[inline]
-  pub fn init<S>(self, symbol: S, start: DateTime<Utc>, end: DateTime<Utc>) -> ListReq
+  pub fn init<S>(self, symbol: S, prefix: MarketPrefix, start: DateTime<Utc>, end: DateTime<Utc>) -> ListReq
   where
     S: Into<String>,
   {
     ListReq {
       symbol: symbol.into(),
+      prefix,
       start,
       end,
       limit: self.limit,
@@ -121,7 +127,6 @@ pub struct Trades {
   pub _non_exhaustive: (),
 }
 
-
 Endpoint! {
   /// The representation of a GET request to the /v2/stocks/{symbol}/trades endpoint.
   pub List(ListReq),
@@ -139,7 +144,7 @@ Endpoint! {
   }
 
   fn path(input: &Self::Input) -> Str {
-    format!("/v2/stocks/{}/trades", input.symbol).into()
+    format!("{}{}/bars", input.prefix, input.symbol).into()
   }
 
   fn query(input: &Self::Input) -> Result<Option<Str>, Self::ConversionError> {
@@ -218,7 +223,7 @@ mod tests {
     let client = Client::new(api_info);
     let start = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
     let end = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("AAPL", start, end);
+    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end);
 
     let res = client.issue::<List>(&request).await.unwrap();
     assert_eq!(res.trades, Vec::new())
@@ -235,7 +240,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", start, end);
+    .init("AAPL", MarketPrefix::Stocks, start, end);
 
     let res = client.issue::<List>(&request).await.unwrap();
     let trades = res.trades;
@@ -261,7 +266,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", start, end);
+    .init("AAPL", MarketPrefix::Stocks, start, end);
 
     let mut res = client.issue::<List>(&request).await.unwrap();
     let trades = res.trades;
@@ -288,7 +293,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", start, end);
+    .init("AAPL", MarketPrefix::Stocks, start, end);
 
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
@@ -313,7 +318,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", start, end);
+    .init("SPY", MarketPrefix::Stocks, start, end);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -331,7 +336,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-02-01T00:00:00Z").unwrap();
     let end = DateTime::from_str("2022-02-20T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", start, end);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {

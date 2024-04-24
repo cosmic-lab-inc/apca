@@ -14,5 +14,8 @@ pub mod quotes;
 pub mod stream;
 /// Definitions for retrieval of market data trades.
 pub mod trades;
+/// Definitions for market path prefixes
+pub mod prefix;
 
 pub use feed::Feed;
+

@@ -10,6 +10,7 @@ use serde_urlencoded::to_string as to_query;
 
 use crate::data::v2::Feed;
 use crate::data::DATA_BASE_URL;
+use crate::data::v2::prefix::MarketPrefix;
 use crate::util::vec_from_str;
 use crate::Str;
 
@@ -55,12 +56,13 @@ pub struct ListReqInit {
 impl ListReqInit {
   /// Create a [`ListReq`] from a `ListReqInit`.
   #[inline]
-  pub fn init<S>(self, symbol: S, start: DateTime<Utc>, end: DateTime<Utc>) -> ListReq
+  pub fn init<S>(self, symbol: S, prefix: MarketPrefix, start: DateTime<Utc>, end: DateTime<Utc>) -> ListReq
   where
     S: Into<String>,
   {
     ListReq {
       symbol: symbol.into(),
+      prefix,
       start,
       end,
       limit: self.limit,
@@ -79,6 +81,10 @@ pub struct ListReq {
   /// The symbol to retrieve quotes for.
   #[serde(skip)]
   pub symbol: String,
+  /// The path prefix based on the market (e.g. stocks or crypto)
+  /// Crypto = /v1beta3/crypto/us/
+  /// Stocks = /v2/stocks/
+  pub prefix: MarketPrefix,
   /// Filter data equal to or after this time in RFC-3339 format.
   /// Defaults to the current day in CT.
   #[serde(rename = "start")]
@@ -123,7 +129,7 @@ Endpoint! {
 
   #[inline]
   fn path(input: &Self::Input) -> Str {
-    format!("/v2/stocks/{}/quotes", input.symbol).into()
+    format!("{}{}/quotes", input.prefix, input.symbol).into()
   }
 
   fn query(input: &Self::Input) -> Result<Option<Str>, Self::ConversionError> {
@@ -155,7 +161,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-01-04T13:35:59Z").unwrap();
     let end = DateTime::from_str("2022-01-04T13:36:00Z").unwrap();
-    let request = ListReqInit::default().init("SPY", start, end);
+    let request = ListReqInit::default().init("SPY", MarketPrefix::Stocks, start, end);
     let quotes = client.issue::<List>(&request).await.unwrap();
 
     assert_eq!(&quotes.symbol, "SPY");
@@ -178,7 +184,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-01-04T13:35:59Z").unwrap();
     let end = DateTime::from_str("2022-01-04T13:36:00Z").unwrap();
-    let request = ListReqInit::default().init("SPY", start, end);
+    let request = ListReqInit::default().init("SPY", MarketPrefix::Stocks, start, end);
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
     // unlimited plan and can access the SIP feed. So really all we can
@@ -198,7 +204,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-01-04T13:35:59Z").unwrap();
     let end = DateTime::from_str("2022-01-04T13:36:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", start, end);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end);
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
       RequestError::Endpoint(ListError::InvalidInput(Ok(_))) => (),
@@ -219,7 +225,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", start, end);
+    .init("SPY", MarketPrefix::Stocks, start, end);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -240,7 +246,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("SPY", start, end);
+    .init("SPY", MarketPrefix::Stocks, start, end);
 
     let mut last_quotes = None;
     // We assume that there are at least three pages of two quotes.

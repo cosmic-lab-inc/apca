@@ -12,6 +12,7 @@ use serde_urlencoded::to_string as to_query;
 
 use crate::data::v2::Feed;
 use crate::data::DATA_BASE_URL;
+use crate::data::v2::prefix::MarketPrefix;
 use crate::util::vec_from_str;
 use crate::Str;
 
@@ -57,8 +58,9 @@ pub struct ListReq {
   /// The symbol for which to retrieve market data.
   #[serde(skip)]
   pub symbol: String,
+  /// Path prefix based on market (e.g. stocks or crypto)
+  pub prefix: MarketPrefix,
   /// The maximum number of bars to be returned for each symbol.
-  ///
   /// It can be between 1 and 10000. Defaults to 1000 if the provided
   /// value is None.
   #[serde(rename = "limit")]
@@ -113,6 +115,7 @@ impl ListReqInit {
   pub fn init<S>(
     self,
     symbol: S,
+    prefix: MarketPrefix,
     start: DateTime<Utc>,
     end: DateTime<Utc>,
     timeframe: TimeFrame,
@@ -122,6 +125,7 @@ impl ListReqInit {
   {
     ListReq {
       symbol: symbol.into(),
+      prefix,
       start,
       end,
       timeframe,
@@ -186,7 +190,6 @@ pub struct Bars {
   pub _non_exhaustive: (),
 }
 
-
 Endpoint! {
   /// The representation of a GET request to the /v2/stocks/{symbol}/bars endpoint.
   pub List(ListReq),
@@ -204,7 +207,7 @@ Endpoint! {
   }
 
   fn path(input: &Self::Input) -> Str {
-    format!("/v2/stocks/{}/bars", input.symbol).into()
+    format!("{}{}/bars", input.prefix, input.symbol).into()
   }
 
   fn query(input: &Self::Input) -> Result<Option<Str>, Self::ConversionError> {
@@ -291,7 +294,7 @@ mod tests {
     let client = Client::new(api_info);
     let start = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
     let end = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("AAPL", start, end, TimeFrame::OneDay);
+    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     let res = client.issue::<List>(&request).await.unwrap();
     assert_eq!(res.bars, Vec::new())
@@ -308,7 +311,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     let res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -346,7 +349,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     let mut res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -373,7 +376,7 @@ mod tests {
       adjustment: Some(adjustment),
       ..Default::default()
     }
-    .init("AAPL", start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     client.issue::<List>(&request).await.unwrap()
   }
@@ -444,7 +447,7 @@ mod tests {
       feed: Some(Feed::SIP),
       ..Default::default()
     }
-    .init("AAPL", start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
@@ -469,7 +472,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", start, end, TimeFrame::OneMinute);
+    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -487,7 +490,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-02-01T00:00:00Z").unwrap();
     let end = DateTime::from_str("2022-02-20T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", start, end, TimeFrame::OneDay);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
