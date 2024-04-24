@@ -65,14 +65,14 @@ pub enum TimeFrame {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 pub enum Sort {
-  acs,
-  desc
+  Asc,
+  Desc
 }
-impl std::fmt::Display for Sort {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl ToString for Sort {
+  fn to_string(&self) -> String {
     match self {
-      Sort::asc => write!(f, "asc"),
-      Sort::desc => write!(f, "desc"),
+      Sort::Asc => "asc".to_string(),
+      Sort::Desc => "desc".to_string(),
     }
   }
 }
@@ -121,8 +121,9 @@ pub struct ListReq {
   #[serde(rename = "limit")]
   pub limit: Option<usize>,
   /// How to sort the bars.
+  /// "asc" or "desc"
   #[serde(rename = "sort")]
-  pub sort: Sort,
+  pub sort: String,
   /// The adjustment to use (defaults to raw)
   #[serde(rename = "adjustment")]
   pub adjustment: Option<Adjustment>,
@@ -180,7 +181,7 @@ impl ListReqInit {
       end,
       timeframe,
       limit: self.limit,
-      sort,
+      sort: sort.to_string(),
       adjustment: self.adjustment,
       feed: self.feed,
       page_token: self.page_token,
@@ -345,7 +346,7 @@ mod tests {
     let client = Client::new(api_info);
     let start = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
     let end = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     assert_eq!(res.bars, Vec::new())
@@ -362,7 +363,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -400,7 +401,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let mut res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -427,7 +428,7 @@ mod tests {
       adjustment: Some(adjustment),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     client.issue::<List>(&request).await.unwrap()
   }
@@ -498,7 +499,7 @@ mod tests {
       feed: Some(Feed::SIP),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
@@ -523,7 +524,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute, Sort::asc);
+    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute, Sort::Asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -541,7 +542,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-02-01T00:00:00Z").unwrap();
     let end = DateTime::from_str("2022-02-20T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::asc);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
