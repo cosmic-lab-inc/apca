@@ -63,6 +63,20 @@ pub enum TimeFrame {
   OneYear,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+pub enum Sort {
+  Asc,
+  Desc
+}
+impl std::fmt::Display for Sort {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Sort::Asc => write!(f, "asc"),
+      Sort::Desc => write!(f, "desc"),
+    }
+  }
+}
+
 
 /// An enumeration of the possible adjustments.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -92,20 +106,23 @@ pub struct ListReq {
   /// Path prefix based on market (e.g. stocks or crypto)
   #[serde(skip)]
   pub prefix: MarketPrefix,
-  /// The maximum number of bars to be returned for each symbol.
-  /// It can be between 1 and 10000. Defaults to 1000 if the provided
-  /// value is None.
-  #[serde(rename = "limit")]
-  pub limit: Option<usize>,
+  /// The time frame for the bars.
+  #[serde(rename = "timeframe")]
+  pub timeframe: TimeFrame,
   /// Filter bars equal to or after this time.
   #[serde(rename = "start")]
   pub start: DateTime<Utc>,
   /// Filter bars equal to or before this time.
   #[serde(rename = "end")]
   pub end: DateTime<Utc>,
-  /// The time frame for the bars.
-  #[serde(rename = "timeframe")]
-  pub timeframe: TimeFrame,
+  /// The maximum number of bars to be returned for each symbol.
+  /// It can be between 1 and 10000. Defaults to 1000 if the provided
+  /// value is None.
+  #[serde(rename = "limit")]
+  pub limit: Option<usize>,
+  /// How to sort the bars.
+  #[serde(rename = "sort")]
+  pub sort: Sort,
   /// The adjustment to use (defaults to raw)
   #[serde(rename = "adjustment")]
   pub adjustment: Option<Adjustment>,
@@ -151,6 +168,7 @@ impl ListReqInit {
     start: DateTime<Utc>,
     end: DateTime<Utc>,
     timeframe: TimeFrame,
+    sort: Sort
   ) -> ListReq
   where
     S: Into<String>,
@@ -162,6 +180,7 @@ impl ListReqInit {
       end,
       timeframe,
       limit: self.limit,
+      sort,
       adjustment: self.adjustment,
       feed: self.feed,
       page_token: self.page_token,
@@ -239,8 +258,6 @@ Endpoint! {
   }
 
   fn path(input: &Self::Input) -> Str {
-    // // url encode input.symbol so that BTC/USD becomes BTC%2FUSD
-    // let symbol = input.symbol.replace("/", "%2F");
     format!("{}bars", input.prefix).into()
   }
 
@@ -328,7 +345,7 @@ mod tests {
     let client = Client::new(api_info);
     let start = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
     let end = DateTime::from_str("2021-11-05T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    let request = ListReqInit::default().init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     assert_eq!(res.bars, Vec::new())
@@ -345,7 +362,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -383,7 +400,7 @@ mod tests {
       limit: Some(2),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let mut res = client.issue::<List>(&request).await.unwrap();
     let bars = res.bars;
@@ -410,7 +427,7 @@ mod tests {
       adjustment: Some(adjustment),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     client.issue::<List>(&request).await.unwrap()
   }
@@ -481,7 +498,7 @@ mod tests {
       feed: Some(Feed::SIP),
       ..Default::default()
     }
-    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    .init("AAPL", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let result = client.issue::<List>(&request).await;
     // Unfortunately we can't really know whether the user has the
@@ -506,7 +523,7 @@ mod tests {
       page_token: Some("123456789abcdefghi".to_string()),
       ..Default::default()
     }
-    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute);
+    .init("SPY", MarketPrefix::Stocks, start, end, TimeFrame::OneMinute, Sort::Asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
@@ -524,7 +541,7 @@ mod tests {
 
     let start = DateTime::from_str("2022-02-01T00:00:00Z").unwrap();
     let end = DateTime::from_str("2022-02-20T00:00:00Z").unwrap();
-    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay);
+    let request = ListReqInit::default().init("ABC123", MarketPrefix::Stocks, start, end, TimeFrame::OneDay, Sort::Asc);
 
     let err = client.issue::<List>(&request).await.unwrap_err();
     match err {
