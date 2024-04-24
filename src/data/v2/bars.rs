@@ -87,7 +87,7 @@ pub enum Adjustment {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct ListReq {
   /// The symbol for which to retrieve market data.
-  #[serde(skip)]
+  #[serde(rename = "symbols")]
   pub symbol: String,
   /// Path prefix based on market (e.g. stocks or crypto)
   #[serde(skip)]
@@ -239,9 +239,9 @@ Endpoint! {
   }
 
   fn path(input: &Self::Input) -> Str {
-    // url encode input.symbol so that BTC/USD becomes BTC%2FUSD
-    let symbol = input.symbol.replace("/", "%2F");
-    format!("{}{}/bars", input.prefix, symbol).into()
+    // // url encode input.symbol so that BTC/USD becomes BTC%2FUSD
+    // let symbol = input.symbol.replace("/", "%2F");
+    format!("{}/bars", input.prefix).into()
   }
 
   fn query(input: &Self::Input) -> Result<Option<Str>, Self::ConversionError> {
