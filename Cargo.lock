@@ -77,9 +77,9 @@ dependencies = [
 
 [[package]]
 name = "async-compression"
-version = "0.4.8"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07dbbf24db18d609b1462965249abdf49129ccad073ec257da372adc83259c60"
+checksum = "cd066d0b4ef8ecb03a55319dc13aa6910616d0f44008a045bb1835af830abff5"
 dependencies = [
  "flate2",
  "futures-core",
